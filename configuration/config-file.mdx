@@ -1,0 +1,114 @@
+---
+title: "Configuration File"
+description: "Full reference for .vectorlintrc.json and vectorlint.config.js configuration options."
+---
+
+## Config file formats
+
+VectorLint looks for configuration in this priority order:
+
+1. `.vectorlintrc.json` (recommended)
+2. `.vectorlintrc.yaml` / `.vectorlintrc.yml`
+3. `vectorlint.config.js` (for dynamic config)
+4. A `"vectorlint"` key in `package.json`
+
+Specify a custom config file with `--config`:
+
+```bash
+vectorlint lint schemas/ --config ./configs/vectorlint.production.json
+```
+
+## Full config reference
+
+```json .vectorlintrc.json
+{
+  "$schema": "https://vectorlint.dev/schema/config.json",
+  "extends": "vectorlint:recommended",
+  "include": ["schemas/**/*.json", "schemas/**/*.yaml"],
+  "exclude": ["schemas/archive/**", "schemas/**/*.test.json"],
+  "parserOptions": {
+    "format": "auto"
+  },
+  "rules": {
+    "schema/consistent-dimensions": "error",
+    "schema/no-undefined-fields": "warn",
+    "metadata/required-fields": ["error", { "fields": ["doc_id", "source"] }],
+    "metadata/type-mismatch": "error",
+    "dimensions/power-of-two": "warn",
+    "dimensions/model-mismatch": "error"
+  },
+  "plugins": [],
+  "overrides": [
+    {
+      "include": ["schemas/pinecone/**"],
+      "parserOptions": { "format": "pinecone" }
+    }
+  ]
+}
+```
+
+## Field reference
+
+<ParamField path="extends" type="string | string[]">
+  A built-in preset or path to a shareable config. Built-in values: `"vectorlint:recommended"`,
+  `"vectorlint:strict"`, `"vectorlint:all"`. Multiple extends are merged left-to-right with later
+  entries taking precedence.
+</ParamField>
+
+<ParamField path="include" type="string[]" default='["**/*.json", "**/*.yaml", "**/*.yml"]'>
+  Glob patterns for files to lint. Relative to the config file directory.
+</ParamField>
+
+<ParamField path="exclude" type="string[]" default='["**/node_modules/**"]'>
+  Glob patterns to exclude. Takes precedence over `include`.
+</ParamField>
+
+<ParamField path="parserOptions.format" type="string" default="auto">
+  Force a specific schema format. Accepted values: `"auto"`, `"generic"`, `"pinecone"`,
+  `"weaviate"`, `"qdrant"`, `"pgvector"`.
+</ParamField>
+
+<ParamField path="rules" type="object">
+  Rule severity overrides. Keys are rule IDs; values are `"off"`, `"warn"`, `"error"`, or a
+  `[severity, options]` tuple.
+</ParamField>
+
+<ParamField path="plugins" type="string[]">
+  Array of plugin module paths or package names to load.
+</ParamField>
+
+<ParamField path="overrides" type="array">
+  File-pattern-specific config overrides. Each entry requires `include` and accepts any other
+  config fields. Overrides are applied in order; later overrides win.
+</ParamField>
+
+## JavaScript config (dynamic)
+
+Use `vectorlint.config.js` for dynamic configuration, such as reading from environment variables:
+
+```javascript vectorlint.config.js
+const isProduction = process.env.NODE_ENV === "production";
+
+module.exports = {
+  extends: "vectorlint:recommended",
+  include: ["schemas/**/*.json"],
+  rules: {
+    "dimensions/model-mismatch": isProduction ? "error" : "warn",
+    "metadata/required-fields": [
+      "error",
+      { "fields": isProduction ? ["doc_id", "source", "tenant_id"] : ["doc_id"] }
+    ]
+  }
+};
+```
+
+## The `$schema` property
+
+Adding the `$schema` key to your `.vectorlintrc.json` enables JSON Schema validation and IDE
+autocompletion in editors like VS Code:
+
+```json
+{
+  "$schema": "https://vectorlint.dev/schema/config.json"
+}
+```

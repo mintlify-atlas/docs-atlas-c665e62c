@@ -1,0 +1,178 @@
+---
+title: "Vector Database Support"
+description: "How to configure VectorLint for Pinecone, Weaviate, Qdrant, and pgvector schemas."
+---
+
+## Overview
+
+VectorLint auto-detects the schema format for supported vector databases. This guide shows best practices for each platform and any platform-specific rules.
+
+<Tabs>
+  <Tab title="Pinecone">
+    VectorLint detects Pinecone index specs by looking for `spec.serverless` or `spec.pods` keys.
+
+    <CodeGroup>
+
+    ```json schemas/pinecone/products.json
+    {
+      "name": "prod-products-v1",
+      "dimension": 1536,
+      "metric": "cosine",
+      "spec": {
+        "serverless": {
+          "cloud": "aws",
+          "region": "us-east-1"
+        }
+      }
+    }
+    ```
+
+    </CodeGroup>
+
+    Recommended config for Pinecone projects:
+
+    <CodeGroup>
+
+    ```json .vectorlintrc.json
+    {
+      "extends": "vectorlint:recommended",
+      "parserOptions": { "format": "pinecone" },
+      "include": ["schemas/pinecone/**/*.json"]
+    }
+    ```
+
+    </CodeGroup>
+
+    Rules especially relevant to Pinecone: `dimensions/model-mismatch` (1536 for OpenAI, 768 for Cohere), `schema/consistent-dimensions` (all indexes for the same model should have matching dimensions).
+  </Tab>
+  <Tab title="Weaviate">
+    VectorLint detects Weaviate schemas by the presence of `class` and `vectorizer` keys.
+
+    <CodeGroup>
+
+    ```json schemas/weaviate/Product.json
+    {
+      "class": "Product",
+      "vectorizer": "text2vec-openai",
+      "moduleConfig": {
+        "text2vec-openai": {
+          "model": "text-embedding-3-small",
+          "dimensions": 1536
+        }
+      },
+      "properties": [
+        { "name": "productId", "dataType": ["text"] },
+        { "name": "category", "dataType": ["text"] }
+      ]
+    }
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup>
+
+    ```json .vectorlintrc.json
+    {
+      "extends": "vectorlint:recommended",
+      "parserOptions": { "format": "weaviate" },
+      "include": ["schemas/weaviate/**/*.json"]
+    }
+    ```
+
+    </CodeGroup>
+  </Tab>
+  <Tab title="Qdrant">
+    VectorLint detects Qdrant schemas by `vectors.size` and `vectors.distance` keys.
+
+    <CodeGroup>
+
+    ```json schemas/qdrant/products.json
+    {
+      "collection_name": "products",
+      "vectors": {
+        "size": 1536,
+        "distance": "Cosine"
+      },
+      "payload_schema": {
+        "product_id": { "data_type": "keyword" },
+        "price": { "data_type": "float" }
+      }
+    }
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup>
+
+    ```json .vectorlintrc.json
+    {
+      "extends": "vectorlint:recommended",
+      "parserOptions": { "format": "qdrant" },
+      "include": ["schemas/qdrant/**/*.json"]
+    }
+    ```
+
+    </CodeGroup>
+
+    <Note>
+      Qdrant uses `"Cosine"` (capitalized) while VectorLint normalizes metric names internally. The `schema/consistent-dimensions` rule works correctly across Qdrant schemas regardless of capitalization.
+    </Note>
+  </Tab>
+  <Tab title="pgvector">
+    VectorLint detects pgvector schemas by `table`, `vector_column`, and `dimensions` keys.
+
+    <CodeGroup>
+
+    ```json schemas/pgvector/embeddings.json
+    {
+      "table": "product_embeddings",
+      "vector_column": "embedding",
+      "dimensions": 1536,
+      "index_type": "ivfflat",
+      "metric": "cosine",
+      "metadata_columns": [
+        { "column": "product_id", "type": "text", "nullable": false },
+        { "column": "category", "type": "text", "nullable": false }
+      ]
+    }
+    ```
+
+    </CodeGroup>
+
+    <CodeGroup>
+
+    ```json .vectorlintrc.json
+    {
+      "extends": "vectorlint:recommended",
+      "parserOptions": { "format": "pgvector" },
+      "include": ["schemas/pgvector/**/*.json"]
+    }
+    ```
+
+    </CodeGroup>
+  </Tab>
+</Tabs>
+
+## Mixed-database projects
+
+If your project uses multiple vector databases, configure separate include patterns per format using overrides:
+
+<CodeGroup>
+
+```json .vectorlintrc.json
+{
+  "extends": "vectorlint:recommended",
+  "overrides": [
+    {
+      "include": ["schemas/pinecone/**"],
+      "parserOptions": { "format": "pinecone" }
+    },
+    {
+      "include": ["schemas/qdrant/**"],
+      "parserOptions": { "format": "qdrant" }
+    }
+  ]
+}
+```
+
+</CodeGroup>

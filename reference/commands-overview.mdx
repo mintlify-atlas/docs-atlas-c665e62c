@@ -1,0 +1,44 @@
+---
+title: "Commands Overview"
+description: "All VectorLint CLI commands at a glance."
+---
+
+## Usage
+
+```bash
+vectorlint <command> [options]
+```
+
+## Commands
+
+<CardGroup cols={2}>
+  <Card title="lint" icon="magnifying-glass" href="/reference/lint">
+    Analyze schema files for violations.
+  </Card>
+  <Card title="init" icon="wand-magic-sparkles" href="/reference/init">
+    Bootstrap a `.vectorlintrc.json` config from your existing schemas.
+  </Card>
+  <Card title="rules" icon="list" href="/reference/rules">
+    List and describe built-in and plugin rules.
+  </Card>
+</CardGroup>
+
+## Global flags
+
+These flags work with all commands.
+
+| Flag | Type | Description |
+|------|------|-------------|
+| `--config <path>` | string | Path to config file (default: auto-detect) |
+| `--no-config` | boolean | Run without any config file |
+| `--version` | boolean | Print VectorLint version |
+| `--help` | boolean | Print help for the command |
+
+## Getting help
+
+```bash
+vectorlint --help
+vectorlint lint --help
+vectorlint init --help
+vectorlint rules --help
+```

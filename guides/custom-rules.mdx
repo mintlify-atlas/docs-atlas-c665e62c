@@ -1,0 +1,133 @@
+---
+title: "Writing Custom Rules"
+description: "Extend VectorLint with your own rules using the plugin API."
+---
+
+## When to write a custom rule
+
+Custom rules are useful for team-specific conventions that the built-in rules don't cover. Examples:
+
+- Enforce that all indexes follow a naming convention (e.g. `{env}-{service}-{version}`)
+- Require a specific metadata field unique to your data model
+- Enforce that production indexes always use `cosine` metric
+
+## Rule structure
+
+A custom rule is a JavaScript/TypeScript object with three properties:
+
+- `id` — unique namespaced ID (e.g. `myteam/index-naming`)
+- `meta` — metadata object with `description`, `severity`, and `fixable` (boolean)
+- `create(context)` — factory function that returns an object of visitor methods
+
+<CodeGroup>
+
+```typescript rules/index-naming.ts
+import type { Rule } from "vectorlint";
+
+const indexNamingRule: Rule = {
+  id: "myteam/index-naming",
+  meta: {
+    description: "Index names must follow the pattern: {env}-{service}-{version}",
+    severity: "warn",
+    fixable: false,
+  },
+  create(context) {
+    return {
+      IndexDefinition(node) {
+        const pattern = /^(prod|staging|dev)-[a-z0-9-]+-v\d+$/;
+        if (!pattern.test(node.name)) {
+          context.report({
+            node,
+            message: `Index name "${node.name}" does not match the required pattern: {env}-{service}-{version}. Example: "prod-products-v1"`,
+          });
+        }
+      },
+    };
+  },
+};
+
+export default indexNamingRule;
+```
+
+</CodeGroup>
+
+## The `context` API
+
+The `context` object passed to `create()` provides:
+
+- `context.report({ node, message, fix? })` — report a violation
+- `context.options` — rule options from config (the second element of a tuple rule config)
+- `context.filename` — path to the file being linted
+- `context.schema` — the full parsed schema object
+
+## Available visitor nodes
+
+VectorLint calls your visitor methods with these node types:
+
+- `IndexDefinition` — the top-level schema object
+- `MetadataField(node)` — each entry in `metadata_fields`
+- `DimensionValue(node)` — the dimension number node
+
+## Auto-fix support
+
+If your rule can suggest a fix, set `fixable: true` in `meta` and pass a `fix` function to `context.report`:
+
+<CodeGroup>
+
+```typescript rules/metric-fix.ts
+context.report({
+  node,
+  message: "Metric should be 'cosine' for text embeddings",
+  fix(fixer) {
+    return fixer.replaceText(node.metricNode, '"cosine"');
+  },
+});
+```
+
+</CodeGroup>
+
+## Creating a plugin
+
+Package multiple rules as a plugin:
+
+<CodeGroup>
+
+```typescript vectorlint-plugin-myteam/index.ts
+import type { Plugin } from "vectorlint";
+import indexNamingRule from "./rules/index-naming";
+import requiredMetadataRule from "./rules/required-metadata";
+
+const plugin: Plugin = {
+  rules: {
+    "index-naming": indexNamingRule,
+    "required-metadata": requiredMetadataRule,
+  },
+};
+
+export default plugin;
+```
+
+</CodeGroup>
+
+## Using a plugin
+
+Reference local or npm-published plugins in your config:
+
+<CodeGroup>
+
+```json .vectorlintrc.json
+{
+  "extends": "vectorlint:recommended",
+  "plugins": ["./vectorlint-plugin-myteam/index.js"],
+  "rules": {
+    "myteam/index-naming": "error",
+    "myteam/required-metadata": ["error", { "fields": ["tenant_id"] }]
+  }
+}
+```
+
+</CodeGroup>
+
+<Note>
+  Plugin paths are resolved relative to your `.vectorlintrc.json` file. Use a package name (e.g. `"vectorlint-plugin-myteam"`) if the plugin is installed as an npm package.
+</Note>

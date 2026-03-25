@@ -1,0 +1,115 @@
+---
+title: "Installation"
+description: "Install VectorLint using npm, Homebrew, or a standalone binary."
+---
+
+## Requirements
+
+- **Node.js 18 or later** — required for npm/yarn/pnpm installs
+- **macOS, Linux, or Windows** — WSL is recommended on Windows
+
+## Install VectorLint
+
+<Tabs>
+  <Tab title="npm / yarn / pnpm">
+    Install globally using your preferred Node.js package manager:
+
+    <CodeGroup>
+
+    ```bash npm
+    npm install -g vectorlint
+    ```
+
+    ```bash yarn
+    yarn global add vectorlint
+    ```
+
+    ```bash pnpm
+    pnpm add -g vectorlint
+    ```
+
+    </CodeGroup>
+  </Tab>
+
+  <Tab title="Homebrew">
+    Install on macOS or Linux using Homebrew:
+
+    ```bash
+    brew tap taz-mon/vectorlint
+    brew install vectorlint
+    ```
+  </Tab>
+
+  <Tab title="Standalone binary">
+    Download a pre-built binary directly from [GitHub Releases](https://github.com/taz-mon/vectorlint-docs/releases/latest).
+
+    **Linux / macOS:**
+
+    ```bash
+    curl -fsSL https://github.com/taz-mon/vectorlint-docs/releases/latest/download/vectorlint-linux-x64 -o /usr/local/bin/vectorlint
+    chmod +x /usr/local/bin/vectorlint
+    ```
+
+    **Windows:**
+
+    Download `vectorlint-win-x64.exe` from the releases page and add it to a directory on your `PATH`.
+  </Tab>
+</Tabs>
+
+## Verify installation
+
+```bash
+vectorlint --version
+```
+
+Expected output:
+
+```text
+vectorlint v1.0.0
+```
+
+## Install as a project dependency
+
+To pin VectorLint to a specific version within a project, install it as a dev dependency:
+
+<CodeGroup>
+
+```bash npm
+npm install --save-dev vectorlint
+```
+
+</CodeGroup>
+
+Then run it via npx:
+
+```bash
+npx vectorlint lint
+```
+
+Or add it to your `package.json` scripts:
+
+```json package.json
+{
+  "scripts": {
+    "lint:vectors": "vectorlint lint schemas/"
+  }
+}
+```
+
+## Updating
+
+<CodeGroup>
+
+```bash npm
+npm update -g vectorlint
+```
+
+```bash Homebrew
+brew upgrade vectorlint
+```
+
+</CodeGroup>
+
+<Note>
+  To pin a specific version in CI, install with `npm install -g vectorlint@1.0.0` or use a lockfile in your project.
+</Note>

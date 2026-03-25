@@ -1,23 +1,11 @@
 {
-  "$schema": "https://mintlify.com/docs.json",
-  "name": "VectorLint",
+  "projectType": "cli-tool",
+  "projectName": "VectorLint",
+  "projectDescription": "A static analysis and linting tool for validating vector embeddings, schemas, and AI/ML pipeline configurations.",
   "theme": "luma",
-  "colors": {
-    "primary": "#6366f1",
-    "light": "#818cf8",
-    "dark": "#4338ca"
-  },
-  "navbar": {
-    "primary": {
-      "type": "github",
-      "href": "https://github.com/taz-mon/vectorlint-docs"
-    }
-  },
-  "footer": {
-    "socials": {
-      "github": "https://github.com/taz-mon/vectorlint-docs"
-    }
-  },
+  "primaryColor": "#6366f1",
+  "lightColor": "#818cf8",
+  "darkColor": "#4338ca",
   "navigation": {
     "tabs": [
       {
@@ -59,5 +47,29 @@
         ]
       }
     ]
-  }
+  },
+  "keyFeatures": [
+    "Static analysis of vector embedding schemas and dimensions",
+    "Configurable rule sets for validating AI/ML pipeline definitions",
+    "CI/CD integration via exit codes and JSON output",
+    "Custom rule authoring with a plugin API",
+    "Support for popular vector databases (Pinecone, Weaviate, Qdrant, pgvector)",
+    "Auto-fix suggestions for common schema mismatches",
+    "Init command to bootstrap configuration from existing schemas"
+  ],
+  "publicApiSurface": [
+    "vectorlint lint [path]",
+    "vectorlint init",
+    "vectorlint rules [--list] [--describe <rule>]",
+    "vectorlint --config <file>",
+    "vectorlint --fix",
+    "vectorlint --format [json|text|sarif]",
+    ".vectorlintrc.json / vectorlint.config.js",
+    "Rule: schema/consistent-dimensions",
+    "Rule: schema/no-undefined-fields",
+    "Rule: metadata/required-fields",
+    "Rule: metadata/type-mismatch",
+    "Rule: dimensions/power-of-two",
+    "Rule: dimensions/model-mismatch"
+  ]
 }

@@ -1,0 +1,79 @@
+---
+title: "Migrating Between Versions"
+description: "Breaking changes and migration steps for each major VectorLint release."
+---
+
+## Version compatibility
+
+VectorLint follows semantic versioning. Breaking changes are released in major versions only. The upgrade path is:
+
+- **Patch** (1.0.x → 1.0.y): safe to upgrade, bug fixes only
+- **Minor** (1.0.x → 1.1.x): safe to upgrade, additive changes
+- **Major** (1.x → 2.x): review this guide for breaking changes
+
+## Migrating to v1.0
+
+<Info>
+  v1.0 is the initial stable release. If you used a pre-release (0.x) version, review the changes below.
+</Info>
+
+### Configuration file changes
+
+The config file was renamed from `vectorlint.json` to `.vectorlintrc.json`. VectorLint will still detect `vectorlint.json` but will print a deprecation warning.
+
+Rename your config:
+
+<CodeGroup>
+
+```bash shell
+mv vectorlint.json .vectorlintrc.json
+```
+
+</CodeGroup>
+
+### Rule ID changes
+
+Several rule IDs were reorganized in v1.0 to use consistent namespacing:
+
+| Old ID (0.x) | New ID (1.0) |
+|---|---|
+| `consistent-dimensions` | `schema/consistent-dimensions` |
+| `no-undefined-fields` | `schema/no-undefined-fields` |
+| `required-fields` | `metadata/required-fields` |
+| `type-mismatch` | `metadata/type-mismatch` |
+| `power-of-two` | `dimensions/power-of-two` |
+| `model-mismatch` | `dimensions/model-mismatch` |
+
+Update your `.vectorlintrc.json` rules to use the new IDs.
+
+### Output format changes
+
+The JSON output format in v1.0 adds a `hint` field and renames `line_number` to `line`. Update any scripts that parse JSON output.
+
+<CodeGroup>
+
+```json before (0.x)
+{ "rule": "consistent-dimensions", "line_number": 3, "col": 16 }
+```
+
+```json after (1.0)
+{ "ruleId": "schema/consistent-dimensions", "line": 3, "column": 16, "hint": "..." }
+```
+
+</CodeGroup>
+
+## Checking for issues after upgrading
+
+After upgrading, run with `--format json` and check for any new violations introduced by rule changes:
+
+<CodeGroup>
+
+```bash shell
+vectorlint lint schemas/ --format json > post-upgrade-report.json
+```
+
+</CodeGroup>
+
+<Tip>
+  If you have a CI pipeline, run VectorLint with the new version in a branch first. Review the output before merging to main.
+</Tip>

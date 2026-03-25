@@ -1,0 +1,81 @@
+---
+title: "vectorlint rules"
+description: "List and describe rules available in your current VectorLint configuration."
+---
+
+## Usage
+
+```bash
+vectorlint rules [options]
+```
+
+## Subcommands / modes
+
+### List all rules
+
+```bash
+vectorlint rules --list
+```
+
+Shows all enabled rules, their severity, and a short description. Includes rules from plugins.
+
+Example output:
+
+```text
+Built-in rules (6):
+  schema/consistent-dimensions  (error)  Dimension values must be consistent across fields referencing the same model
+  schema/no-undefined-fields    (warn)   Schema must not contain unrecognized top-level keys
+  metadata/required-fields      (error)  Required metadata fields must be declared
+  metadata/type-mismatch        (error)  Metadata field types must match their declared type
+  dimensions/power-of-two       (warn)   Embedding dimensions are typically a power of two
+  dimensions/model-mismatch     (error)  Dimension must match the output size of the referenced model
+```
+
+### Describe a specific rule
+
+```bash
+vectorlint rules --describe schema/consistent-dimensions
+```
+
+Example output:
+
+```text
+Rule: schema/consistent-dimensions
+Category: schema
+Severity: error (from vectorlint:recommended)
+Fixable: no
+
+Description:
+  When multiple schema files reference the same embedding model, their dimension
+  values must be identical. Inconsistent dimensions across indexes cause hard-to-debug
+  query failures when switching between indexes.
+
+Options:
+  None
+
+Examples of violations:
+  schemas/products.json (dim: 1536) and schemas/users.json (dim: 768) both reference
+  text-embedding-3-small but use different dimensions.
+```
+
+## Flags
+
+<ParamField path="--list" type="boolean">
+  Print all available rules with severity and description.
+</ParamField>
+
+<ParamField path="--describe" type="string">
+  Print detailed documentation for a specific rule, including options and violation examples.
+</ParamField>
+
+<ParamField path="--config" type="string">
+  Use a specific config file when resolving which rules are enabled.
+</ParamField>
+
+<ParamField path="--json" type="boolean">
+  Output `--list` results as JSON for programmatic use.
+</ParamField>
+
+<Note>
+  `vectorlint rules --list` shows only rules that are currently enabled in your config. To see all rules including disabled ones, run `vectorlint rules --list --all`.
+</Note>

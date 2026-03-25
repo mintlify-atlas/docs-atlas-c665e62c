@@ -1,0 +1,119 @@
+---
+title: "Metadata Rules"
+description: "Built-in rules for validating metadata field declarations in vector index schemas."
+---
+
+## Overview
+
+Metadata rules (`metadata/` prefix) validate the `metadata_fields` (or equivalent) section of your schema definitions. These rules ensure that required fields are declared, field types are correct, and field names follow expected conventions.
+
+---
+
+## `metadata/required-fields`
+
+<CardGroup cols={2}>
+  <Card title="Default severity" icon="circle-exclamation">
+    `error`
+  </Card>
+  <Card title="Fixable" icon="wrench">
+    No
+  </Card>
+</CardGroup>
+
+**Description:**
+Enforces that specific metadata fields are declared in the schema. By default, this rule has no required fields — you must configure which fields are required for your data model. This is useful for enforcing organization-wide conventions like always requiring a `doc_id` or `source` field.
+
+**Configuration (required):**
+
+This rule does nothing without configuration. Specify required fields:
+
+```json .vectorlintrc.json
+{
+  "rules": {
+    "metadata/required-fields": ["error", {
+      "fields": ["doc_id", "source", "created_at"]
+    }]
+  }
+}
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `fields` | `string[]` | `[]` | Field names that must appear in `metadata_fields` |
+
+**Violation example:**
+
+Schema that's missing `doc_id`:
+
+```json schemas/products.json
+{
+  "index": "products",
+  "dimension": 1536,
+  "metric": "cosine",
+  "metadata_fields": [
+    { "name": "category", "type": "string", "required": true }
+  ]
+}
+```
+
+**Output:**
+
+```text
+✖ schemas/products.json
+  schema: metadata/required-fields [error] Required metadata field "doc_id" is not declared. Add it to metadata_fields.
+```
+
+---
+
+## `metadata/type-mismatch`
+
+<CardGroup cols={2}>
+  <Card title="Default severity" icon="circle-exclamation">
+    `error`
+  </Card>
+  <Card title="Fixable" icon="wrench">
+    No
+  </Card>
+</CardGroup>
+
+**Description:**
+Checks that metadata field type declarations use recognized, consistent type names. This rule catches typos in type names (`"stirng"` instead of `"string"`) and normalizes type naming across schema formats.
+
+Recognized type names: `"string"`, `"number"`, `"boolean"`, `"string[]"`, `"number[]"`.
+
+**Violation example:**
+
+```json schemas/products.json
+{
+  "metadata_fields": [
+    { "name": "product_id", "type": "stirng", "required": true },
+    { "name": "tags", "type": "array", "required": false }
+  ]
+}
+```
+
+**Output:**
+
+```text
+✖ schemas/products.json
+  Line 3: metadata/type-mismatch [error] Unrecognized type "stirng" for field "product_id". Did you mean "string"?
+  Line 4: metadata/type-mismatch [error] Type "array" is ambiguous. Use "string[]" or "number[]" to specify the element type.
+```
+
+**Configuration:**
+
+Optionally allow additional custom types:
+
+```json
+{
+  "rules": {
+    "metadata/type-mismatch": ["error", {
+      "allowedTypes": ["json", "vector"]
+    }]
+  }
+}
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `allowedTypes` | `string[]` | `[]` | Additional type names to accept without triggering this rule |

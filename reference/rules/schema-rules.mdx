@@ -1,0 +1,111 @@
+---
+title: "Schema Rules"
+description: "Built-in rules for validating the structural correctness of vector index schema definitions."
+---
+
+## Overview
+
+Schema rules (`schema/` prefix) validate the structure and consistency of your vector index schema definitions. These rules catch problems at the schema definition level — missing required keys, unrecognized fields, and internal inconsistencies.
+
+---
+
+## `schema/consistent-dimensions`
+
+<CardGroup cols={2}>
+  <Card title="Default severity" icon="circle-exclamation">
+    `error`
+  </Card>
+  <Card title="Fixable" icon="wrench">
+    No
+  </Card>
+</CardGroup>
+
+**Description:**
+When multiple schema files in your project reference the same embedding model (detected by `vectorizer`, `model`, or similar fields), all schemas referencing that model must declare the same dimension value. Mismatched dimensions between indexes of the same model cause silent query failures when results from one index are used with another.
+
+**Violation example:**
+
+<CodeGroup>
+
+```json schemas/products.json
+{
+  "index": "products",
+  "dimension": 1536,
+  "vectorizer": "text-embedding-3-small"
+}
+```
+
+```json schemas/articles.json
+{
+  "index": "articles",
+  "dimension": 768,
+  "vectorizer": "text-embedding-3-small"
+}
+```
+
+</CodeGroup>
+
+**Output:**
+
+```text
+✖ schemas/articles.json
+  Line 3: schema/consistent-dimensions [error] Dimension 768 conflicts with dimension 1536 declared in schemas/products.json for model "text-embedding-3-small". All indexes using the same model must have identical dimensions.
+```
+
+**Configuration:**
+
+No options. Enable or disable with:
+
+```json
+{ "rules": { "schema/consistent-dimensions": "error" } }
+```
+
+---
+
+## `schema/no-undefined-fields`
+
+<CardGroup cols={2}>
+  <Card title="Default severity" icon="triangle-exclamation">
+    `warn`
+  </Card>
+  <Card title="Fixable" icon="wrench">
+    No
+  </Card>
+</CardGroup>
+
+**Description:**
+Warns when the schema file contains top-level keys that VectorLint does not recognize for the detected format. Unrecognized fields are often the result of typos or stale properties from a previous schema version. This rule helps keep schemas clean and prevents silent misconfigurations.
+
+**Violation example:**
+
+```json schemas/products.json
+{
+  "index": "products",
+  "dimension": 1536,
+  "metric": "cosine",
+  "replicas": 3
+}
+```
+
+**Output:**
+
+```text
+✖ schemas/products.json
+  Line 5: schema/no-undefined-fields [warn] Unrecognized field "replicas" for generic schema format. Did you mean to use "spec.replicas" (Pinecone format)?
+```
+
+**Configuration:**
+
+Optionally allow specific fields:
+
+```json
+{
+  "rules": {
+    "schema/no-undefined-fields": ["warn", { "allow": ["custom_tag", "team_owner"] }]
+  }
+}
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `allow` | `string[]` | `[]` | Field names to allow without triggering this rule |

@@ -1,0 +1,142 @@
+---
+title: "Vector Schemas"
+description: "The schema formats VectorLint understands and how it parses them."
+---
+
+## What is a vector schema?
+
+A vector schema defines the structure of a vector index: how many dimensions each embedding has, what distance metric is used, and what metadata fields are stored alongside each vector. VectorLint validates these definition files — not the vectors themselves.
+
+## Supported formats
+
+<Tabs>
+  <Tab title="Generic">
+    Any JSON or YAML file with a recognized structure. VectorLint auto-detects this format when it finds `dimension`, `metric`, and optionally `metadata_fields` keys at the top level.
+
+    ```json schemas/my-index.json
+    {
+      "index": "product-embeddings",
+      "dimension": 1536,
+      "metric": "cosine",
+      "metadata_fields": [
+        { "name": "product_id", "type": "string", "required": true },
+        { "name": "category", "type": "string", "required": true },
+        { "name": "price", "type": "number", "required": false }
+      ]
+    }
+    ```
+  </Tab>
+
+  <Tab title="Pinecone">
+    Pinecone index creation spec format. VectorLint recognizes this when it sees `pods`, `pod_type`, or `serverless` keys.
+
+    ```json schemas/pinecone-index.json
+    {
+      "name": "product-search",
+      "dimension": 1536,
+      "metric": "cosine",
+      "spec": {
+        "serverless": {
+          "cloud": "aws",
+          "region": "us-east-1"
+        }
+      }
+    }
+    ```
+  </Tab>
+
+  <Tab title="Weaviate">
+    Weaviate class definition format. Recognized by the presence of `class`, `vectorizer`, and `properties` keys.
+
+    ```json schemas/weaviate-class.json
+    {
+      "class": "Product",
+      "vectorizer": "text2vec-openai",
+      "moduleConfig": {
+        "text2vec-openai": {
+          "model": "text-embedding-3-small",
+          "dimensions": 1536
+        }
+      },
+      "properties": [
+        { "name": "productId", "dataType": ["text"] },
+        { "name": "category", "dataType": ["text"] },
+        { "name": "price", "dataType": ["number"] }
+      ]
+    }
+    ```
+  </Tab>
+
+  <Tab title="Qdrant">
+    Qdrant collection configuration. Recognized by a `vectors` key with `size` and `distance` subkeys.
+
+    ```json schemas/qdrant-collection.json
+    {
+      "collection_name": "products",
+      "vectors": {
+        "size": 1536,
+        "distance": "Cosine"
+      },
+      "payload_schema": {
+        "product_id": { "data_type": "keyword" },
+        "category": { "data_type": "keyword" },
+        "price": { "data_type": "float" }
+      }
+    }
+    ```
+  </Tab>
+
+  <Tab title="pgvector">
+    pgvector table definition in JSON format. Recognized by `table`, `vector_column`, and `dimensions` keys.
+
+    ```json schemas/pgvector-table.json
+    {
+      "table": "product_embeddings",
+      "vector_column": "embedding",
+      "dimensions": 1536,
+      "index_type": "ivfflat",
+      "metric": "cosine",
+      "metadata_columns": [
+        { "column": "product_id", "type": "text", "nullable": false },
+        { "column": "category", "type": "text", "nullable": false },
+        { "column": "price", "type": "numeric", "nullable": true }
+      ]
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Format auto-detection
+
+VectorLint detects the schema format automatically by inspecting the top-level keys. If detection is ambiguous, you can specify the format explicitly in your config:
+
+```json .vectorlintrc.json
+{
+  "parserOptions": {
+    "format": "pinecone"
+  }
+}
+```
+
+Valid values: `"generic"`, `"pinecone"`, `"weaviate"`, `"qdrant"`, `"pgvector"`, `"auto"` (default).
+
+## YAML schemas
+
+All formats also support YAML. VectorLint accepts `.yaml` and `.yml` extensions alongside `.json`.
+
+```yaml schemas/products.yaml
+index: product-embeddings
+dimension: 1536
+metric: cosine
+metadata_fields:
+  - name: product_id
+    type: string
+    required: true
+  - name: category
+    type: string
+    required: true
+```
+
+<Note>
+  TypeScript and JavaScript config files (e.g. `vectorlint.config.ts`) are supported for configuration but not for schema definitions. Schema files must be JSON or YAML.
+</Note>

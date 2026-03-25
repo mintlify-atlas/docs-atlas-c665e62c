@@ -1,0 +1,135 @@
+---
+title: "CI/CD Integration"
+description: "Add VectorLint to GitHub Actions, GitLab CI, and other pipelines to catch schema errors on every pull request."
+---
+
+## Overview
+
+VectorLint exits with code `1` when it finds any `error` or `warn` violations, making it easy to use as a CI check. Use `--format json` or `--format sarif` for structured output that integrates with your CI platform's reporting tools.
+
+## GitHub Actions
+
+<CodeGroup>
+
+```yaml .github/workflows/vectorlint.yml
+name: VectorLint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - "schemas/**"
+      - ".vectorlintrc.json"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install VectorLint
+        run: npm install -g vectorlint
+
+      - name: Run VectorLint
+        run: vectorlint lint schemas/ --format sarif --output vectorlint.sarif
+
+      - name: Upload SARIF results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: vectorlint.sarif
+```
+
+</CodeGroup>
+
+<Tip>
+  Using `--format sarif` with GitHub's `upload-sarif` action shows violations inline on pull request diffs.
+</Tip>
+
+## GitLab CI
+
+<CodeGroup>
+
+```yaml .gitlab-ci.yml
+vectorlint:
+  image: node:20
+  stage: test
+  script:
+    - npm install -g vectorlint
+    - vectorlint lint schemas/ --format json | tee vectorlint-report.json
+  artifacts:
+    when: always
+    paths:
+      - vectorlint-report.json
+    reports:
+      codequality: vectorlint-report.json
+  rules:
+    - changes:
+        - schemas/**/*
+        - .vectorlintrc.json
+```
+
+</CodeGroup>
+
+## Generic CI (JSON output)
+
+For any CI system, use `--format json` and parse the exit code:
+
+<CodeGroup>
+
+```bash shell
+vectorlint lint schemas/ --format json > vectorlint-report.json
+EXIT_CODE=$?
+if [ $EXIT_CODE -eq 1 ]; then
+  echo "VectorLint found violations. See vectorlint-report.json."
+  exit 1
+fi
+```
+
+</CodeGroup>
+
+## JSON output schema
+
+The `--format json` output is an array of violation objects:
+
+<CodeGroup>
+
+```json output
+[
+  {
+    "ruleId": "dimensions/model-mismatch",
+    "severity": "error",
+    "message": "Dimension 500 is not a recognized output size for common embedding models.",
+    "file": "schemas/products.json",
+    "line": 3,
+    "column": 16,
+    "hint": "text-embedding-3-small outputs 1536 dimensions"
+  }
+]
+```
+
+</CodeGroup>
+
+## Caching VectorLint in CI
+
+<Tip>
+  If you install VectorLint as a project devDependency (`npm install --save-dev vectorlint`), your CI's `node_modules` cache will avoid re-downloading it on every run.
+</Tip>
+
+## Treating warnings as errors
+
+Use `--max-warnings 0` to fail CI if any warnings are found:
+
+<CodeGroup>
+
+```bash shell
+vectorlint lint schemas/ --max-warnings 0
+```
+
+</CodeGroup>

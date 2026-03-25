@@ -1,0 +1,128 @@
+---
+title: "Dimension Rules"
+description: "Built-in rules for validating vector embedding dimension values."
+---
+
+## Overview
+
+Dimension rules (`dimensions/` prefix) validate the numeric dimension values in your schemas. These rules catch common mistakes like using a dimension value that no popular embedding model outputs, or using a value that isn't a power of two (which affects performance on some vector databases).
+
+---
+
+## `dimensions/model-mismatch`
+
+<CardGroup cols={2}>
+  <Card title="Default severity" icon="circle-exclamation">
+    `error`
+  </Card>
+  <Card title="Fixable" icon="wrench">
+    Yes (when the correct dimension can be inferred)
+  </Card>
+</CardGroup>
+
+**Description:**
+Checks that the declared dimension matches the known output size of the referenced embedding model. VectorLint maintains a built-in registry of common embedding models and their output dimensions.
+
+**Known models and dimensions (partial list):**
+
+| Model | Dimensions |
+|-------|------------|
+| `text-embedding-3-small` | 1536 |
+| `text-embedding-3-large` | 3072 |
+| `text-embedding-ada-002` | 1536 |
+| `embed-english-v3.0` (Cohere) | 1024 |
+| `embed-multilingual-v3.0` (Cohere) | 1024 |
+| `all-MiniLM-L6-v2` (Sentence Transformers) | 384 |
+| `all-mpnet-base-v2` (Sentence Transformers) | 768 |
+
+**Violation example:**
+
+```json schemas/products.json
+{
+  "index": "products",
+  "dimension": 512,
+  "vectorizer": "text-embedding-3-small"
+}
+```
+
+**Output:**
+
+```text
+✖ schemas/products.json
+  Line 3: dimensions/model-mismatch [error] Model "text-embedding-3-small" outputs 1536 dimensions, but schema declares 512.
+  Hint: Set dimension to 1536, or use --fix to apply automatically.
+```
+
+**Configuration:**
+
+```json
+{
+  "rules": {
+    "dimensions/model-mismatch": "error"
+  }
+}
+```
+
+You can add custom models to the registry:
+
+```json
+{
+  "rules": {
+    "dimensions/model-mismatch": ["error", {
+      "models": {
+        "my-custom-model": 256
+      }
+    }]
+  }
+}
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `models` | `Record<string, number>` | `{}` | Additional model→dimension mappings to add to the built-in registry |
+
+---
+
+## `dimensions/power-of-two`
+
+<CardGroup cols={2}>
+  <Card title="Default severity" icon="triangle-exclamation">
+    `warn`
+  </Card>
+  <Card title="Fixable" icon="wrench">
+    No
+  </Card>
+</CardGroup>
+
+**Description:**
+Warns when the declared dimension is not a power of two (e.g., 128, 256, 512, 1024, 2048). Many vector databases and ANN index implementations perform best with power-of-two dimensions due to memory alignment and SIMD optimization. This is an advisory rule — some models (like OpenAI's 1536-dim models) use non-power-of-two dimensions intentionally.
+
+**Violation example:**
+
+```json schemas/products.json
+{
+  "index": "products",
+  "dimension": 1536
+}
+```
+
+**Output:**
+
+```text
+✖ schemas/products.json
+  Line 3: dimensions/power-of-two [warn] Dimension 1536 is not a power of two. Consider using 1024 or 2048 for better performance, or disable this rule if your embedding model requires 1536 dimensions.
+```
+
+<Note>
+  `text-embedding-3-small` and `text-embedding-ada-002` both output 1536 dimensions. If you use these models, disable this rule or set it to `"info"`.
+</Note>
+
+**Configuration:**
+
+```json
+{
+  "rules": {
+    "dimensions/power-of-two": "off"
+  }
+}
+```

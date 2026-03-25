@@ -1,0 +1,91 @@
+---
+title: "How VectorLint Works"
+description: "Understand the analysis pipeline: file discovery, parsing, rule execution, and reporting."
+---
+
+## Overview
+
+VectorLint works by discovering schema files in your project, parsing them into an internal representation, running configured rules against that representation, and reporting violations with location information and fix hints.
+
+## The analysis pipeline
+
+<Steps>
+  <Step title="File discovery">
+    VectorLint uses the `include` and `exclude` patterns in your `.vectorlintrc.json` to discover schema files. By default it looks for `.json` and `.yaml` files matching `schemas/**/*`.
+
+    ```json .vectorlintrc.json
+    {
+      "include": ["schemas/**/*"],
+      "exclude": ["schemas/archive/**", "**/*.test.json"]
+    }
+    ```
+  </Step>
+
+  <Step title="Parsing">
+    Each file is parsed into a normalized schema object. VectorLint understands several schema formats:
+
+    - **Generic** — JSON/YAML with `dimension`, `metric`, and `metadata_fields` keys
+    - **Pinecone** — Pinecone index specs
+    - **Weaviate** — Weaviate class definitions
+    - **Qdrant** — Qdrant collection configs
+    - **pgvector** — pgvector table definitions
+
+    The parser detects the format automatically based on structure.
+  </Step>
+
+  <Step title="Rule execution">
+    Each enabled rule receives the parsed schema object and can inspect any part of it. Rules return zero or more `Violation` objects. A violation includes:
+
+    - Rule ID
+    - Severity (`error`, `warn`, or `info`)
+    - Message
+    - File path
+    - Line number and column
+    - An optional fix suggestion
+  </Step>
+
+  <Step title="Reporting">
+    Violations are collected and formatted according to `--format`:
+
+    - `text` (default) — human-readable terminal output with colors and line pointers
+    - `json` — machine-readable array of violation objects
+    - `sarif` — SARIF 2.1.0 for GitHub Code Scanning and other SAST tools
+  </Step>
+</Steps>
+
+## Exit codes
+
+| Code | Meaning |
+| ---- | ------- |
+| `0`  | No violations at severity `error` or `warn` |
+| `1`  | One or more violations at severity `error` or `warn` |
+| `2`  | Configuration or parse error (VectorLint itself failed) |
+
+<Note>
+  Only `error` and `warn` violations affect the exit code. `info` violations are advisory only.
+</Note>
+
+## Rule severities
+
+VectorLint has three severity levels:
+
+- **`error`** — The schema is definitively wrong. Blocks CI.
+- **`warn`** — A potential problem or best-practice deviation. Configurable to block CI.
+- **`info`** — An informational note. Never blocks CI.
+
+You can override the severity for any rule in your config:
+
+```json .vectorlintrc.json
+{
+  "rules": {
+    "dimensions/power-of-two": "warn",
+    "metadata/required-fields": "error"
+  }
+}
+```
+
+## What VectorLint does NOT do
+
+<Note>
+  VectorLint is a static analysis tool. It reads schema definition files only — it never connects to a live vector database, never reads document data, and never modifies your index.
+</Note>

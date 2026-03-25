@@ -1,0 +1,85 @@
+---
+title: "vectorlint init"
+description: "Bootstrap a .vectorlintrc.json configuration file for your project."
+---
+
+## Usage
+
+```bash
+vectorlint init [options]
+```
+
+## What it does
+
+`vectorlint init` scans your project for schema files, detects their formats (Pinecone, Weaviate, Qdrant, pgvector, or generic), and generates a `.vectorlintrc.json` tailored to what it finds.
+
+If a config file already exists, `init` will prompt before overwriting it (or exit with an error if `--force` is not set).
+
+## Example
+
+```bash
+vectorlint init
+```
+
+Example output:
+
+```text
+Scanning for schema files...
+
+Found 4 schema files:
+  schemas/pinecone/products.json  (pinecone)
+  schemas/pinecone/users.json     (pinecone)
+  schemas/weaviate/Article.json   (weaviate)
+  schemas/legacy/old-index.json   (generic)
+
+Generated .vectorlintrc.json with:
+  - extends: vectorlint:recommended
+  - include: ["schemas/**/*.json"]
+  - overrides for pinecone and weaviate formats
+
+✔ Done. Run `vectorlint lint` to check your schemas.
+```
+
+## Generated config
+
+The generated config will look something like:
+
+```json .vectorlintrc.json
+{
+  "$schema": "https://vectorlint.dev/schema/config.json",
+  "extends": "vectorlint:recommended",
+  "include": ["schemas/**/*.json", "schemas/**/*.yaml"],
+  "overrides": [
+    {
+      "include": ["schemas/pinecone/**"],
+      "parserOptions": { "format": "pinecone" }
+    },
+    {
+      "include": ["schemas/weaviate/**"],
+      "parserOptions": { "format": "weaviate" }
+    }
+  ]
+}
+```
+
+## Flags
+
+<ParamField path="--force" type="boolean">
+  Overwrite an existing config file without prompting.
+</ParamField>
+
+<ParamField path="--config" type="string">
+  Write the config to a custom path instead of `.vectorlintrc.json`.
+</ParamField>
+
+<ParamField path="--extends" type="string" default="vectorlint:recommended">
+  Set the `extends` preset in the generated config. Options: `"vectorlint:recommended"`, `"vectorlint:strict"`, `"vectorlint:all"`.
+</ParamField>
+
+<ParamField path="--dir" type="string" default=".">
+  Directory to scan for schema files. Default: current working directory.
+</ParamField>
+
+<Tip>
+  After running `init`, review the generated config before committing it. You may want to tighten the `include` patterns or adjust rule severities.
+</Tip>

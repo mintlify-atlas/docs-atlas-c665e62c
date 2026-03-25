@@ -1,0 +1,79 @@
+---
+title: "FAQ"
+description: "Frequently asked questions about VectorLint."
+---
+
+<AccordionGroup>
+  <Accordion title="Does VectorLint connect to my vector database?">
+    No. VectorLint is a static analysis tool that reads schema definition files only. It never makes network connections to Pinecone, Weaviate, Qdrant, pgvector, or any other service. Your API keys and database credentials are never needed.
+  </Accordion>
+
+  <Accordion title="What schema file formats does VectorLint support?">
+    VectorLint supports JSON and YAML schema files. It auto-detects the schema format — generic, Pinecone, Weaviate, Qdrant, or pgvector — based on the file's structure.
+
+    See the [Vector Schemas](/concepts/vector-schemas) concept page for format details.
+  </Accordion>
+
+  <Accordion title="Can I use VectorLint without a config file?">
+    Yes. Run `vectorlint lint --no-config` to use built-in defaults: all `error`-severity rules are enabled, and VectorLint looks for `.json` and `.yaml` files in the current directory.
+
+    For any real project, we recommend creating a config with `vectorlint init`.
+  </Accordion>
+
+  <Accordion title="How do I disable a rule for a specific file?">
+    You can use inline disable comments or `overrides` in your config.
+
+    To disable a rule for a single line:
+
+    ```json
+    // vectorlint-disable-line rule-id
+    ```
+
+    To disable all rules for an entire file, add the following at the top:
+
+    ```json
+    // vectorlint-disable
+    ```
+
+    See the [Ignore Patterns](/configuration/ignore-patterns) guide for all available options.
+  </Accordion>
+
+  <Accordion title="Does VectorLint support TypeScript schema files?">
+    Not for schema definitions — VectorLint reads JSON and YAML schema files only.
+
+    However, you can write your VectorLint configuration in JavaScript or TypeScript (`vectorlint.config.js`). If you define schemas in TypeScript, export them as JSON or YAML before running VectorLint.
+  </Accordion>
+
+  <Accordion title="Can I write rules in TypeScript?">
+    Yes. VectorLint's plugin API supports TypeScript. Write your rule in TypeScript, compile it to JavaScript, and reference the compiled output in your `plugins` config.
+
+    The provided types — `Rule`, `Plugin`, and `Context` — are available from the `vectorlint` package.
+  </Accordion>
+
+  <Accordion title="How does VectorLint handle multiple schema formats in one project?">
+    Use `overrides` in your config to apply different `parserOptions.format` values to different directory patterns.
+
+    See the [Vector Database Support](/guides/vector-databases) guide for a mixed-format example.
+  </Accordion>
+
+  <Accordion title="What's the difference between vectorlint:recommended and vectorlint:strict?">
+    - `vectorlint:recommended` enables all `error` rules plus common `warn` rules.
+    - `vectorlint:strict` enables all rules at `error` severity — including dimension advisory rules like `dimensions/power-of-two` — which is useful for projects that want zero tolerance for any schema deviation.
+  </Accordion>
+
+  <Accordion title="Does VectorLint have a VS Code extension?">
+    Not yet. VS Code extension support is on the roadmap.
+
+    In the meantime, add VectorLint to your pre-commit hooks or CI pipeline to get feedback quickly.
+  </Accordion>
+
+  <Accordion title="How do I report a false positive?">
+    If a rule fires on code that is intentionally valid, use an inline disable comment for the specific rule:
+
+    ```json
+    // vectorlint-disable-line rule-id
+    ```
+
+    Then file a [GitHub issue](https://github.com/taz-mon/vectorlint-docs/issues) describing the case. Include the schema file content (sanitized if needed) and the VectorLint version (`vectorlint --version`).
+  </Accordion>
+</AccordionGroup>

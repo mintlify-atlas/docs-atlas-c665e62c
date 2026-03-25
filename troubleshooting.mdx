@@ -1,0 +1,117 @@
+---
+title: "Troubleshooting"
+description: "Diagnose and fix common VectorLint errors and unexpected behaviors."
+---
+
+<AccordionGroup>
+  <Accordion title='"No schema files found"'>
+    VectorLint exits with 0 violations and reports "No schema files found."
+
+    **Cause:** The `include` patterns in your config don't match any files in the current directory.
+
+    **Fix:** Run `vectorlint lint --debug` to see which files were discovered. Check that your `include` patterns use the correct path relative to your config file.
+
+    For example, if your schemas are in `src/schemas/`, use:
+
+    ```json .vectorlintrc.json
+    {
+      "include": ["src/schemas/**/*.json"]
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Config file not found">
+    VectorLint reports: `No config file found. Run vectorlint init to create one.`
+
+    **Fix:** Choose one of the following:
+
+    - Run `vectorlint init` to generate `.vectorlintrc.json` in the current directory.
+    - Specify a config file manually: `vectorlint lint --config ./path/to/config.json`
+    - Run without a config using built-in defaults: `vectorlint lint --no-config`
+  </Accordion>
+
+  <Accordion title='"Parse error: unknown schema format"'>
+    VectorLint cannot detect the schema format automatically.
+
+    **Fix:** Set `parserOptions.format` explicitly in your config:
+
+    ```json .vectorlintrc.json
+    {
+      "parserOptions": {
+        "format": "pinecone"
+      }
+    }
+    ```
+
+    Or pass it on the command line:
+
+    ```bash
+    vectorlint lint --parser-options '{"format":"pinecone"}'
+    ```
+
+    The auto-detector requires recognizable top-level keys — for example, `dimension` + `metric` for generic schemas, or `spec.serverless` for Pinecone.
+  </Accordion>
+
+  <Accordion title="Rule violations appear on wrong line numbers">
+    Reported line numbers don't match what you see in the file.
+
+    **Possible cause:** The file has Windows-style line endings (CRLF). VectorLint normalizes line endings on parse. If your editor counts CRLF as two characters, line numbers may appear offset.
+
+    **Fix:** Convert the file to LF line endings, or note that column positions are byte offsets, not character offsets.
+  </Accordion>
+
+  <Accordion title='`--fix` did not fix all violations'>
+    Some violations remain after running `vectorlint lint --fix`.
+
+    **Cause:** Only violations from rules with `fixable: true` are auto-fixed. Rules like `schema/consistent-dimensions` require human judgment and cannot be auto-fixed.
+
+    After running `--fix`, check the remaining violation output — any violation that cannot be auto-fixed will still be reported. These must be resolved manually.
+  </Accordion>
+
+  <Accordion title='Plugin not found / "Cannot resolve plugin"'>
+    VectorLint reports an error like: `Cannot resolve plugin "vectorlint-plugin-myteam"`
+
+    **Fix:**
+
+    - Ensure the plugin is installed: `npm install --save-dev vectorlint-plugin-myteam`
+    - Plugin paths are resolved relative to your `.vectorlintrc.json` file.
+    - For local plugins, use a relative path starting with `./`.
+    - For npm plugins, ensure the package is installed in the same `node_modules` as your project.
+  </Accordion>
+
+  <Accordion title="VectorLint is slow on large schema directories">
+    VectorLint takes a long time when run against a directory with thousands of files.
+
+    **Fix:**
+
+    - Tighten your `include` and `exclude` patterns to skip non-schema files.
+    - Use `exclude` to skip `node_modules`, `dist`, and generated files.
+    - Run `vectorlint lint --debug` to see how many files are being processed and identify what can be excluded.
+  </Accordion>
+
+  <Accordion title="Exit code 2 / internal error">
+    VectorLint exits with code 2 and prints an internal error.
+
+    **Fix:**
+
+    1. Check that your config file is valid JSON:
+
+       ```bash
+       vectorlint --config .vectorlintrc.json --validate-config
+       ```
+
+    2. If the config is valid, run with verbose output:
+
+       ```bash
+       VECTORLINT_DEBUG=1 vectorlint lint
+       ```
+
+    3. File an issue at [GitHub Issues](https://github.com/taz-mon/vectorlint-docs/issues) and include the full output.
+  </Accordion>
+</AccordionGroup>
+
+## Getting more help
+
+- Run any command with `--help` for usage information.
+- Use `--debug` for verbose output.
+- File bugs at [GitHub Issues](https://github.com/taz-mon/vectorlint-docs/issues).

@@ -1,0 +1,117 @@
+---
+title: "Ignore Patterns"
+description: "Control which files VectorLint analyzes using include/exclude patterns and inline ignore comments."
+---
+
+## File-level ignore patterns
+
+### Using `exclude` in config
+
+The `exclude` field accepts glob patterns. Files matching any exclude pattern are skipped entirely:
+
+```json .vectorlintrc.json
+{
+  "include": ["schemas/**/*.json"],
+  "exclude": [
+    "schemas/archive/**",
+    "schemas/**/*.test.json",
+    "schemas/legacy/**"
+  ]
+}
+```
+
+### The `.vectorlintignore` file
+
+Create a `.vectorlintignore` file (same syntax as `.gitignore`) to exclude files without modifying
+your config:
+
+```text .vectorlintignore
+# Archived schemas
+schemas/archive/
+
+# Generated files
+schemas/generated/
+
+# Test fixtures
+schemas/**/*.test.json
+```
+
+<Note>
+  `.vectorlintignore` is always resolved relative to the project root (where your
+  `.vectorlintrc.json` lives).
+</Note>
+
+## Inline ignore comments
+
+### Ignore a single violation
+
+Add a comment on the line with the violation:
+
+```json
+{
+  "dimension": 500  // vectorlint-disable-line dimensions/model-mismatch
+}
+```
+
+For YAML:
+
+```yaml
+dimension: 500  # vectorlint-disable-line dimensions/model-mismatch
+```
+
+### Ignore all violations on a line
+
+```json
+{
+  "dimension": 500  // vectorlint-disable-line
+}
+```
+
+### Ignore a block
+
+```json
+{
+  // vectorlint-disable
+  "dimension": 500,
+  "metric": "l2"
+  // vectorlint-enable
+}
+```
+
+### Ignore a specific rule for a block
+
+```json
+{
+  // vectorlint-disable dimensions/model-mismatch
+  "dimension": 500
+  // vectorlint-enable dimensions/model-mismatch
+}
+```
+
+### Ignore an entire file
+
+Add at the top of the file:
+
+```json
+// vectorlint-disable
+{
+  "index": "legacy-index",
+  "dimension": 500
+}
+```
+
+<Warning>
+  Disabling rules widely (entire files or large blocks) can hide real problems. Prefer disabling
+  specific rules for specific lines where possible.
+</Warning>
+
+## Checking unused disable comments
+
+Run with `--report-unused-disable-directives` to get warnings for disable comments that don't
+suppress any actual violation:
+
+```bash
+vectorlint lint schemas/ --report-unused-disable-directives
+```
+
+This helps keep your ignore comments accurate as your schemas evolve.

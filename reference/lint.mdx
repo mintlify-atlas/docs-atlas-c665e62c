@@ -1,0 +1,111 @@
+---
+title: "vectorlint lint"
+description: "Analyze vector schema files for violations."
+---
+
+## Usage
+
+```bash
+vectorlint lint [paths...] [options]
+```
+
+`paths` — One or more file paths or glob patterns to lint. Overrides the `include` patterns in your config. If omitted, uses `include` from config.
+
+## Examples
+
+```bash
+# Lint all schemas using config include patterns
+vectorlint lint
+
+# Lint a specific directory
+vectorlint lint schemas/
+
+# Lint specific files
+vectorlint lint schemas/products.json schemas/users.json
+
+# Lint with a glob
+vectorlint lint "schemas/**/*.json"
+
+# Output as JSON
+vectorlint lint schemas/ --format json
+
+# Output as SARIF
+vectorlint lint schemas/ --format sarif --output vectorlint.sarif
+
+# Fail on any warnings
+vectorlint lint schemas/ --max-warnings 0
+
+# Auto-fix safe violations
+vectorlint lint schemas/ --fix
+```
+
+## Flags
+
+<ParamField path="--format" type="string" default="text">
+  Output format. One of `text` (default), `json`, `sarif`. `text` is for humans; `json` and `sarif` are for CI and tooling integrations.
+</ParamField>
+
+<ParamField path="--output" type="string">
+  Write output to a file instead of stdout. Useful with `--format json` or `--format sarif`.
+</ParamField>
+
+<ParamField path="--fix" type="boolean">
+  Automatically apply safe, unambiguous fixes. Only fixes violations where the rule sets `fixable: true` and the fix is deterministic. Writes fixed files in place.
+</ParamField>
+
+<ParamField path="--fix-dry-run" type="boolean">
+  Show what `--fix` would change without writing files. Outputs a diff to stdout.
+</ParamField>
+
+<ParamField path="--max-warnings" type="number">
+  Exit with code `1` if the number of warnings exceeds this threshold. Use `0` to treat all warnings as errors.
+</ParamField>
+
+<ParamField path="--quiet" type="boolean">
+  Only report `error` violations; suppress `warn` and `info`.
+</ParamField>
+
+<ParamField path="--no-color" type="boolean">
+  Disable color in `text` output. Useful when piping to files or tools that don't support ANSI codes.
+</ParamField>
+
+<ParamField path="--rule" type="string">
+  Override a single rule's severity inline without modifying config. Can be specified multiple times. Example: `--rule dimensions/model-mismatch=warn`
+</ParamField>
+
+<ParamField path="--config" type="string">
+  Path to config file. Overrides auto-detection.
+</ParamField>
+
+<ParamField path="--no-config" type="boolean">
+  Run without loading any config file. Uses all built-in defaults.
+</ParamField>
+
+<ParamField path="--report-unused-disable-directives" type="boolean">
+  Warn about inline disable comments that don't suppress any violation.
+</ParamField>
+
+## Exit codes
+
+| Code | Meaning |
+|------|---------|
+| `0` | No violations at `error` or `warn` severity |
+| `1` | One or more violations at `error` or `warn` severity |
+| `2` | Configuration error, parse error, or internal VectorLint failure |
+
+## Text output format
+
+The default `text` format produces human-readable output:
+
+```text
+✖ schemas/products.json
+  Line 3:  dimensions/model-mismatch  [error]   Dimension 500 is not a recognized output size for common embedding models.
+                                                  Hint: text-embedding-3-small outputs 1536 dimensions.
+
+  Line 12: metadata/required-fields   [error]   Required field "doc_id" is not declared in metadata_fields.
+
+✖ schemas/users.json
+  Line 5:  dimensions/power-of-two    [warn]    Dimension 300 is not a power of two. Common power-of-two dimensions: 256, 512, 1024.
+
+3 violations found (2 errors, 1 warning) in 2 files.
+```

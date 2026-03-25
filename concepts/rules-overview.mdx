@@ -1,0 +1,78 @@
+---
+title: "Rules Overview"
+description: "How rules work, the three built-in rule categories, and how to configure rule severity."
+---
+
+## What is a rule?
+
+Each rule is a named check that VectorLint runs against a parsed schema. Rules are identified by a namespaced ID like `schema/consistent-dimensions` or `metadata/required-fields`. Every rule has:
+
+- An **ID** in `namespace/name` format
+- A **default severity**: `error`, `warn`, or `info`
+- A **description** of what it checks
+- An optional **auto-fix** capability
+
+## Rule categories
+
+<CardGroup cols={2}>
+  <Card title="schema/" icon="code" href="/reference/rules/schema-rules">
+    Structural correctness of the schema definition itself — field types, required keys, and consistency between fields.
+  </Card>
+  <Card title="dimensions/" icon="ruler" href="/reference/rules/dimension-rules">
+    Validity and consistency of vector dimension values — model alignment, power-of-two suggestions, and cross-index consistency.
+  </Card>
+  <Card title="metadata/" icon="tag" href="/reference/rules/metadata-rules">
+    Metadata payload field definitions — required fields, type correctness, and naming conventions.
+  </Card>
+</CardGroup>
+
+## Configuring rules
+
+There are three ways to set a rule's behavior in your config:
+
+1. `"off"` — disable the rule entirely
+2. `"warn"` — report as a warning (does not fail CI by default)
+3. `"error"` — report as an error (fails CI)
+
+Some rules accept options as a tuple `[severity, options]`:
+
+```json .vectorlintrc.json
+{
+  "rules": {
+    "schema/consistent-dimensions": "error",
+    "dimensions/power-of-two": "warn",
+    "metadata/required-fields": ["error", { "fields": ["doc_id", "source"] }],
+    "schema/no-undefined-fields": "off"
+  }
+}
+```
+
+## Extends presets
+
+VectorLint ships with three built-in presets:
+
+- **`vectorlint:recommended`** — sensible defaults for most projects (enables all `error`-severity rules plus common `warn` rules)
+- **`vectorlint:strict`** — all rules at `error` severity
+- **`vectorlint:all`** — all rules enabled at their default severities
+
+Use `extends` to apply a preset:
+
+```json .vectorlintrc.json
+{
+  "extends": "vectorlint:recommended"
+}
+```
+
+You can also extend multiple presets. The last one wins on conflicts:
+
+```json .vectorlintrc.json
+{
+  "extends": ["vectorlint:recommended", "./custom-rules.js"]
+}
+```
+
+## Rule resolution order
+
+<Tip>
+  Rules from `extends` are applied first, then `rules` in your config override them. This means you can use `vectorlint:strict` as a base and selectively downgrade specific rules.
+</Tip>

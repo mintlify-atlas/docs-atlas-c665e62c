@@ -1,0 +1,110 @@
+---
+title: "Plugins"
+description: "Install and configure VectorLint plugins to add custom rules and parsers."
+---
+
+## What plugins can do
+
+Plugins extend VectorLint with:
+
+- Custom rules (team-specific validation logic)
+- Custom parsers (support for additional schema formats)
+- Shareable configs (preset rule sets to share across projects)
+
+## Installing a plugin
+
+### npm plugin
+
+Install the plugin package, then reference it in your config:
+
+<CodeGroup>
+
+```bash npm
+npm install --save-dev vectorlint-plugin-myteam
+```
+
+```json .vectorlintrc.json
+{
+  "extends": "vectorlint:recommended",
+  "plugins": ["vectorlint-plugin-myteam"],
+  "rules": {
+    "myteam/index-naming": "error",
+    "myteam/required-metadata": ["error", { "fields": ["tenant_id"] }]
+  }
+}
+```
+
+</CodeGroup>
+
+### Local plugin
+
+For in-repo plugins, use a relative path:
+
+```json .vectorlintrc.json
+{
+  "plugins": ["./tools/vectorlint-plugin.js"],
+  "rules": {
+    "local/my-rule": "warn"
+  }
+}
+```
+
+## Plugin naming conventions
+
+VectorLint plugins follow the naming convention `vectorlint-plugin-{name}`. When referencing in
+config, you can use the short name (omit the `vectorlint-plugin-` prefix):
+
+```json
+{
+  "plugins": ["myteam"]
+}
+```
+
+This resolves to the npm package `vectorlint-plugin-myteam`.
+
+## Using a plugin's shareable config
+
+Many plugins ship with their own `extends` preset. Reference it with the plugin name prefix:
+
+```json .vectorlintrc.json
+{
+  "extends": ["vectorlint:recommended", "plugin:myteam/recommended"],
+  "plugins": ["myteam"]
+}
+```
+
+## Creating a plugin
+
+See [Writing Custom Rules](/guides/custom-rules) for a complete guide on building a plugin from
+scratch.
+
+## Plugin compatibility
+
+<Tip>
+  Plugins must be compatible with your installed VectorLint version. Check the plugin's README for
+  version requirements. If a plugin is incompatible, VectorLint will print a warning on startup.
+</Tip>
+
+## Listing loaded plugins and rules
+
+Run `vectorlint rules --list` to see all rules, including those from plugins:
+
+```bash
+vectorlint rules --list
+```
+
+Example output:
+
+```text
+Built-in rules:
+  schema/consistent-dimensions  (error)   Dimension values must be consistent across fields referencing the same model
+  schema/no-undefined-fields    (warn)    Schema must not contain unrecognized top-level fields
+  metadata/required-fields      (error)   Required metadata fields must be declared
+  metadata/type-mismatch        (error)   Metadata field types must match their declared type
+  dimensions/power-of-two       (warn)    Embedding dimensions are typically a power of two
+  dimensions/model-mismatch     (error)   Dimension must match the output size of the referenced model
+
+Plugin rules (myteam):
+  myteam/index-naming           (error)   Index names must follow {env}-{service}-{version} pattern
+  myteam/required-metadata      (error)   Required team metadata fields must be present
+```

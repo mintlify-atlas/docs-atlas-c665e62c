@@ -1,0 +1,58 @@
+---
+title: "Introduction"
+description: "What VectorLint is, why it exists, and how it fits into your AI/ML development workflow."
+---
+
+VectorLint is a static analysis CLI tool for vector embedding schemas, index configurations, and AI/ML pipeline definitions. It catches structural and semantic problems in your schema files before they reach production.
+
+## The problem
+
+Vector search failures are notoriously hard to debug at query time. When a dimension mismatch, schema drift, or missing metadata field causes incorrect results or silent errors, the root cause is rarely obvious from the output. Common issues include:
+
+- **Dimension mismatches** — an embedding model outputs 1536 dimensions but the index is configured for 768
+- **Schema drift** — a metadata field is renamed in the schema but old pipeline code still writes the old name
+- **Missing required fields** — payloads omit fields that filters depend on, causing queries to return empty results
+
+These problems are straightforward to detect statically, before any data is written or queries are run. VectorLint does exactly that.
+
+## How it fits into your workflow
+
+VectorLint runs locally during development and in CI/CD pipelines. Point it at your schema definition files and it reports violations with line numbers, rule names, and actionable hints. In CI, it exits with a non-zero code on violations and supports JSON and SARIF output for integration with code review tools.
+
+## Key capabilities
+
+<CardGroup cols={2}>
+  <Card title="Schema validation" icon="shield-check">
+    Validates field types, required fields, and structural consistency across your schema definition files.
+  </Card>
+  <Card title="Dimension checking" icon="ruler">
+    Matches embedding model output dimensions against index configuration to catch mismatches before indexing.
+  </Card>
+  <Card title="Metadata enforcement" icon="tag">
+    Enforces required payload fields and verifies type correctness against your schema.
+  </Card>
+  <Card title="CI/CD integration" icon="git-branch">
+    Outputs JSON or SARIF, exits non-zero on violations, and integrates with GitHub Actions and other CI systems.
+  </Card>
+  <Card title="Custom rules" icon="puzzle">
+    Extend VectorLint with your own rules using the plugin API to enforce project-specific conventions.
+  </Card>
+  <Card title="Multi-database support" icon="database">
+    Supports schema formats for Pinecone, Weaviate, Qdrant, and pgvector out of the box.
+  </Card>
+</CardGroup>
+
+<Note>
+  VectorLint analyzes schema definition files — it does not connect to live vector databases.
+</Note>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Quick start" icon="rocket" href="/quickstart">
+    Lint your first vector schema in under two minutes.
+  </Card>
+  <Card title="Installation" icon="download" href="/installation">
+    Install via npm, Homebrew, or a standalone binary.
+  </Card>
+</CardGroup>
